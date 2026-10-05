@@ -1,6 +1,3 @@
-Sí. Lo ideal es que este sea el archivo central que los tres mantengan actualizado. La regla principal será: **la IA debe leer este archivo antes de modificar código y no debe asumir decisiones que no estén definidas aquí**.
-
-Te dejo una primera versión completa, pensada para el proyecto actual de API WARS y para que después podamos ir actualizándola conforme construyan el MVP.
 
 # API WARS — PROJECT CONTEXT
 
