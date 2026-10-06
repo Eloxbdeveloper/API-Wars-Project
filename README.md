@@ -1,7 +1,5 @@
 # FactuLocal
 
-## Cobra. Factura. Crece.
-
 FactuLocal es una aplicación web creada para pequeños negocios que necesitan cobrar a sus clientes y generar facturas electrónicas.
 
 La aplicación conecta **Factus Pay** y **Factus** para que el proceso sea automático.
