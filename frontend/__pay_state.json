@@ -1,0 +1,9 @@
+{
+  "invoiceId": "6ac4a8ee200c89d0a0fab99a",
+  "referenceCode": "INV-1791273198080-5857",
+  "amount": 59500,
+  "status": "ready",
+  "paymentUrl": "mono:breb-participant:sandbox:qr:type=dynamic&id=01a11033e830723eb2852ff83caa8c42&key_type=alphanumeric&key_value=@FCSDFS3QUUM1FFWCWC6A&value=5950000",
+  "customerId": "6ac4a8ed200c89d0a0fab993",
+  "productId": "6ac4a8ed200c89d0a0fab996"
+}
