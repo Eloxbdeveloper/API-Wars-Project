@@ -529,8 +529,8 @@ y crea un flujo integrado entre ambas.
 
 Proyecto desarrollado por el equipo de **API WARS 2026**.
 
-* Emanuel Orjuela Barbosa
-* [Nombre del integrante]
-* [Nombre del integrante]
-* [Nombre del integrante]
+* Emanuel Orjuela Barbosa - eloxbdevcollabs@hotmail.com
+* Juan David Useche Perez
+* Adrián Rueda Garzon
+
 
