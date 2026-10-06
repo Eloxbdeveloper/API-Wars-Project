@@ -74,3 +74,67 @@ module.exports = {
   getAccessToken,
   clearTokenCache
 };
+
+import axios from 'axios';
+
+class FactusAuthService {
+  constructor() {
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.tokenExpiresAt = null;
+  }
+
+  /**
+   * Obtiene un token de acceso válido de Factus (Sandbox/Producción).
+   * Implementa almacenamiento en memoria y renovación transparente.
+   */
+  async getAccessToken() {
+    const now = Date.now();
+
+    // Reutiliza token si aún no vence (margen de 60s de tolerancia)
+    if (this.accessToken && this.tokenExpiresAt && now < this.tokenExpiresAt - 60000) {
+      return this.accessToken;
+    }
+
+    try {
+      const baseUrl = process.env.FACTUS_BASE_URL || 'https://api-sandbox.factus.com.co';
+      
+      const payload = {
+        grant_type: 'password',
+        client_id: process.env.FACTUS_CLIENT_ID,
+        client_secret: process.env.FACTUS_CLIENT_SECRET,
+        username: process.env.FACTUS_USERNAME,
+        password: process.env.FACTUS_PASSWORD
+      };
+
+      const response = await axios.post(`${baseUrl}/oauth/token`, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      const { access_token, refresh_token, expires_in } = response.data;
+
+      this.accessToken = access_token;
+      this.refreshToken = refresh_token;
+      this.tokenExpiresAt = now + expires_in * 1000;
+
+      return this.accessToken;
+    } catch (error) {
+      const errorMessage = error.response?.data?.error_description || error.response?.data?.message || error.message;
+      throw new Error(`[FactusAuthError] Fallo la autenticación OAuth con Factus: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Invalida el caché local en caso de recepción de un 401.
+   */
+  clearCache() {
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.tokenExpiresAt = null;
+  }
+}
+
+export const factusAuth = new FactusAuthService();

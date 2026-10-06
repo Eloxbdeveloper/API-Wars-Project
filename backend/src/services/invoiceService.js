@@ -1,5 +1,6 @@
 const CustomerModule = require('../models/Customer');
 const InvoiceModule = require('../models/Invoice');
+const Product = require('../models/product');
 
 const Customer = CustomerModule.Customer || CustomerModule;
 const Invoice = InvoiceModule.Invoice || InvoiceModule;
@@ -7,6 +8,161 @@ const Invoice = InvoiceModule.Invoice || InvoiceModule;
 const { transmitInvoiceToFactus } = require('../integrations/factus/invoices');
 
 class InvoiceService {
+  /**
+   * Crea un borrador de factura (DRAFT).
+   * Realiza la búsqueda del cliente, snapshot de productos desde MongoDB, 
+   * generación de referenceCode e impide manipulación de precios desde el cliente.
+   */
+  static async createInvoice(data) {
+    const { customerId, items } = data;
+
+    // 1. Validar y buscar el cliente
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      const error = new Error('El cliente asociado no fue encontrado.');
+      error.status = 404;
+      throw error;
+    }
+
+    // 2. Validar ítems
+    if (!Array.isArray(items) || items.length === 0) {
+      const error = new Error('La factura debe contener al menos un ítem.');
+      error.status = 400;
+      throw error;
+    }
+
+    // 3. Construir el snapshot de los productos consultándolos directamente de la base de datos
+    const processedItems = [];
+    for (const item of items) {
+      if (!item.productId) {
+        const error = new Error('Cada ítem debe incluir un productId.');
+        error.status = 400;
+        throw error;
+      }
+
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        const error = new Error(`El producto con ID ${item.productId} no fue encontrado.`);
+        error.status = 404;
+        throw error;
+      }
+
+      const quantity = parseInt(item.quantity, 10);
+      if (isNaN(quantity) || quantity <= 0) {
+        const error = new Error('La cantidad debe ser un número entero mayor a 0.');
+        error.status = 400;
+        throw error;
+      }
+
+      // Snapshot protegido contra manipulación de precios desde el frontend
+      processedItems.push({
+        productId: product._id,
+        code: product.code,
+        name: product.name,
+        quantity: quantity,
+        unitPrice: product.price, // Precio oficial de MongoDB
+        taxRate: product.taxRate ?? 19 // Tasa impositiva oficial
+      });
+    }
+
+    // 4. Generar referenceCode único
+    const referenceCode = `INV-${Date.now()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+
+    // 5. Crear la factura (el middleware pre('validate') de Mongoose calculará subtotales e impuestos automáticamente)
+    const newInvoice = new Invoice({
+      referenceCode,
+      customer: customer._id,
+      items: processedItems,
+      status: 'DRAFT'
+    });
+
+    await newInvoice.save();
+    return await Invoice.findById(newInvoice._id).populate('customer');
+  }
+
+  static async getInvoices(query = {}) {
+    return await Invoice.find(query).populate('customer');
+  }
+
+  static async getInvoiceById(id) {
+    return await Invoice.findById(id).populate('customer');
+  }
+
+  /**
+   * Actualiza un borrador de factura (DRAFT). 
+   * Bloquea la edición si la factura ya se encuentra emitida (ISSUED).
+   */
+  static async updateInvoice(id, data) {
+    const invoice = await Invoice.findById(id);
+    if (!invoice) {
+      const error = new Error('La factura especificada no existe.');
+      error.status = 404;
+      throw error;
+    }
+
+    if (invoice.status === 'ISSUED') {
+      const error = new Error('No se puede modificar una factura que ya ha sido emitida.');
+      error.status = 400;
+      throw error;
+    }
+
+    const { customerId, items } = data;
+
+    if (customerId) {
+      const customer = await Customer.findById(customerId);
+      if (!customer) {
+        const error = new Error('El cliente asociado no fue encontrado.');
+        error.status = 404;
+        throw error;
+      }
+      invoice.customer = customer._id;
+    }
+
+    if (items && Array.isArray(items)) {
+      if (items.length === 0) {
+        const error = new Error('La factura debe contener al menos un ítem.');
+        error.status = 400;
+        throw error;
+      }
+
+      const processedItems = [];
+      for (const item of items) {
+        if (!item.productId) {
+          const error = new Error('Cada ítem debe incluir un productId.');
+          error.status = 400;
+          throw error;
+        }
+
+        const product = await Product.findById(item.productId);
+        if (!product) {
+          const error = new Error(`El producto con ID ${item.productId} no fue encontrado.`);
+          error.status = 404;
+          throw error;
+        }
+
+        const quantity = parseInt(item.quantity, 10);
+        if (isNaN(quantity) || quantity <= 0) {
+          const error = new Error('La cantidad debe ser un número entero mayor a 0.');
+          error.status = 400;
+          throw error;
+        }
+
+        processedItems.push({
+          productId: product._id,
+          code: product.code,
+          name: product.name,
+          quantity: quantity,
+          unitPrice: product.price,
+          taxRate: product.taxRate ?? 19
+        });
+      }
+      invoice.items = processedItems;
+    }
+
+    await invoice.save(); // Dispara validación y recálculo automático de totales
+    return await Invoice.findById(invoice._id).populate('customer');
+  }
+
   /**
    * Emite una factura electrónica ante Factus / DIAN.
    * Respetando idempotencia mediante referenceCode y actualización local de estado.
@@ -57,25 +213,21 @@ class InvoiceService {
       // 5. Actualización exitosa en MongoDB
       invoice.status = 'ISSUED';
 
-      // ID numérico asignado por Factus (data.bill.id)
       const rawId = bill.id ?? innerData.id ?? responseData.id;
       invoice.factusId = rawId !== undefined && rawId !== null ? String(rawId) : null;
 
-      // Número consecutivo de la factura (ej. SETP990023274)
       invoice.numbering =
         innerData.number ||
         bill.number ||
         responseData.number ||
         null;
 
-      // CUFE
       invoice.cufe =
         innerData.cufe ||
         bill.cufe ||
         responseData.cufe ||
         null;
 
-      // Código QR (prioridad: data.links.qr -> bill.qr -> bill.qr_image)
       const rawQr =
         links.qr ||
         bill.qr ||
@@ -86,7 +238,6 @@ class InvoiceService {
         ? (rawQr.qr || rawQr.url || rawQr.image || JSON.stringify(rawQr))
         : (rawQr || null);
 
-      // URL pública de Factus (prioridad: data.links.public_url -> bill.public_url)
       invoice.pdfUrl =
         links.public_url ||
         bill.public_url ||
@@ -137,7 +288,6 @@ class InvoiceService {
         }
       }
 
-      // Si es un error fiscal, de validación o de red
       invoice.status = 'ERROR';
       invoice.errorMessage = error.message || 'Error al procesar la factura en Factus';
       invoice.factusResponse = {
@@ -149,22 +299,6 @@ class InvoiceService {
 
       throw error;
     }
-  }
-
-  static async createInvoice(data) {
-    return await Invoice.create(data);
-  }
-
-  static async getInvoices(query = {}) {
-    return await Invoice.find(query).populate('customer');
-  }
-
-  static async getInvoiceById(id) {
-    return await Invoice.findById(id).populate('customer');
-  }
-
-  static async updateInvoice(id, data) {
-    return await Invoice.findByIdAndUpdate(id, data, { new: true, runValidators: true });
   }
 }
 
