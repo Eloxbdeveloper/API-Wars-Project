@@ -288,10 +288,3 @@ El concepto central es:
 ---
 
 **FactuLocal — Cobra. Factura. Crece.**
-
-
-## Estado Actual (Fase 1)
-- Estructura base completada.
-- Health Check funcionando.
-- Integración con Factus preparada estructuralmente (vacía).
-- Modelos Mongoose preparados estructuralmente (vacíos).
