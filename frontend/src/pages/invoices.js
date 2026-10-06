@@ -1,19 +1,17 @@
-import { 
-  getCustomers, 
-  getProducts, 
-  getInvoices, 
-  getInvoiceById,
-  createInvoiceDraft, 
-  issueInvoice 
-} from '../services/api.js';
-import { escapeHtml, formatCOP, formatDate } from '../utils/format.js';
+import { getCustomers, getProducts, createInvoiceDraft, issueInvoice } from '../services/api.js';
+import { escapeHtml, formatCOP } from '../utils/format.js';
+import { resolveQrSrc, resolveDocUrl } from '../utils/factusAssets.js';
+import { qrImageSrc } from '../utils/qr.js';
 
 export async function renderInvoicesPage(container) {
   container.innerHTML = `
-    <div class="header-actions" style="display: flex; gap: 10px; margin-bottom: 20px;">
-      <h2>Gestión de Facturación</h2>
-      <button id="btn-show-create" class="btn btn-primary">Nueva Factura</button>
-      <button id="btn-show-history" class="btn btn-secondary">Ver Historial</button>
+    <div class="page-head">
+      <h1>Nueva factura</h1>
+      <div class="actions" style="margin-bottom: 0;">
+        <a class="btn btn-secondary" href="#/facturas">Ver facturas</a>
+        <a class="btn btn-secondary" href="#/dashboard">Estadísticas</a>
+        <a class="btn btn-secondary" href="#/notas-credito">Notas crédito</a>
+      </div>
     </div>
 
     <!-- CONTENEDOR DE ALERTAS / ERRORES -->
@@ -52,46 +50,18 @@ export async function renderInvoicesPage(container) {
       <div id="issue-result-container" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #28a745; border-radius: 6px; background-color: #f8fff9;" class="result-box">
         <h3 style="color: #28a745;">¡Factura Emitida Correctamente!</h3>
         <p><strong>Número:</strong> <span id="res-number"></span></p>
+        <p><strong>Estado:</strong> <span id="res-status"></span></p>
         <p><strong>CUFE:</strong> <span id="res-cufe" style="word-break: break-all; font-family: monospace;"></span></p>
         <div id="res-qr-container" style="margin: 15px 0;"></div>
-        <div style="margin-top: 1rem;">
-          <a id="res-public-url" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-link">Ver Documento Público (Factus)</a>
+        <div style="margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 10px;">
+          <a id="res-public-url" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Ver Documento Público (Factus)</a>
+          <a id="res-detail-url" href="#/facturas" class="btn btn-secondary">Ver detalle de la factura</a>
         </div>
         <div style="margin-top: 1.5rem;">
-          <button id="btn-new-invoice-again" class="btn btn-primary">Crear Otra Factura</button>
+          <button id="btn-new-invoice-again" class="btn btn-secondary">Crear Otra Factura</button>
         </div>
       </div>
     </section>
-
-    <!-- SECCIÓN 2: HISTORIAL DE FACTURAS -->
-    <section id="section-invoice-history" class="card-section" style="display: none;">
-      <h3>Historial de Facturas</h3>
-      <div id="history-loading">Cargando historial...</div>
-      <table id="table-history" class="data-table" style="display: none; width: 100%; border-collapse: collapse; margin-top: 10px;">
-        <thead>
-          <tr style="border-bottom: 2px solid #ccc; text-align: left;">
-            <th style="padding: 8px;">Número / Ref</th>
-            <th style="padding: 8px;">Cliente</th>
-            <th style="padding: 8px;">Fecha</th>
-            <th style="padding: 8px;">Total</th>
-            <th style="padding: 8px;">Estado</th>
-            <th style="padding: 8px;">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="history-rows"></tbody>
-      </table>
-    </section>
-
-    <!-- MODAL / VISTA DE DETALLE DE FACTURA -->
-    <div id="invoice-detail-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-      <div style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
-        <h3>Detalle de Factura</h3>
-        <div id="modal-detail-content" style="margin: 15px 0;"></div>
-        <div style="text-align: right;">
-          <button type="button" id="btn-close-modal" class="btn btn-secondary">Cerrar</button>
-        </div>
-      </div>
-    </div>
   `;
 
   await initInvoicesModule(container);
@@ -112,15 +82,7 @@ async function initInvoicesModule(container) {
   const btnConfirmIssue = container.querySelector('#btn-confirm-issue');
   const issueResult = container.querySelector('#issue-result-container');
 
-  const btnShowCreate = container.querySelector('#btn-show-create');
-  const btnShowHistory = container.querySelector('#btn-show-history');
-  const secCreate = container.querySelector('#section-create-invoice');
-  const secHistory = container.querySelector('#section-invoice-history');
   const btnNewAgain = container.querySelector('#btn-new-invoice-again');
-
-  const detailModal = container.querySelector('#invoice-detail-modal');
-  const modalContent = container.querySelector('#modal-detail-content');
-  const btnCloseModal = container.querySelector('#btn-close-modal');
 
   function showAlert(message, isError = true) {
     alertContainer.style.display = 'block';
@@ -135,25 +97,6 @@ async function initInvoicesModule(container) {
     alertContainer.style.display = 'none';
     alertContainer.textContent = '';
   }
-
-  // Alternar pestañas
-  btnShowCreate.addEventListener('click', () => {
-    secCreate.style.display = 'block';
-    secHistory.style.display = 'none';
-    hideAlert();
-  });
-
-  btnShowHistory.addEventListener('click', async () => {
-    secCreate.style.display = 'none';
-    secHistory.style.display = 'block';
-    hideAlert();
-    await loadInvoiceHistory(container);
-  });
-
-  // Cerrar modal de detalle
-  btnCloseModal.addEventListener('click', () => {
-    detailModal.style.display = 'none';
-  });
 
   // Botón para reiniciar flujo y crear otra factura
   if (btnNewAgain) {
@@ -182,6 +125,7 @@ async function initInvoicesModule(container) {
     const row = document.createElement('div');
     row.className = 'item-row';
     row.style.display = 'flex';
+    row.style.flexWrap = 'wrap';
     row.style.gap = '10px';
     row.style.marginBottom = '10px';
 
@@ -317,24 +261,35 @@ async function initInvoicesModule(container) {
       draftReview.style.display = 'none';
       formDraft.style.display = 'none';
 
-      container.querySelector('#res-number').textContent = escapeHtml(issued.numbering || issued.number || issued.bill_number || 'Emitido');
-      container.querySelector('#res-cufe').textContent = escapeHtml(issued.cufe || 'N/A');
-      
+      container.querySelector('#res-number').textContent = issued.numbering || issued.number || 'No disponible';
+      container.querySelector('#res-status').textContent = issued.status || 'No disponible';
+      container.querySelector('#res-cufe').textContent = issued.cufe || 'No disponible';
+
+      // QR real: se codifica el contenido devuelto por Factus/DIAN como imagen visible
       const qrContainer = container.querySelector('#res-qr-container');
-      const qrUrl = issued.qrCodeUrl || issued.qr || issued.qr_code;
-      if (qrUrl) {
-        qrContainer.innerHTML = `<img src="${escapeHtml(qrUrl)}" alt="Código QR Factura" style="max-width: 150px; border: 1px solid #ddd; padding: 4px;"/>`;
+      const qrImg = await qrImageSrc(resolveQrSrc(issued));
+      if (qrImg) {
+        qrContainer.innerHTML = `<img src="${qrImg}" alt="Código QR de la factura" width="180" height="180" />`;
       } else {
-        qrContainer.innerHTML = '<span style="color: #66c;">(QR no disponible en esta respuesta)</span>';
+        qrContainer.innerHTML = '<p class="muted">QR: No disponible</p>';
       }
 
       const publicUrlBtn = container.querySelector('#res-public-url');
-      const finalPdfUrl = issued.pdfUrl || issued.publicUrl || issued.url;
+      const finalPdfUrl = resolveDocUrl(issued);
       if (finalPdfUrl) {
         publicUrlBtn.href = finalPdfUrl;
-        publicUrlBtn.style.display = 'inline-block';
+        publicUrlBtn.style.display = '';
       } else {
         publicUrlBtn.style.display = 'none';
+      }
+
+      const detailLink = container.querySelector('#res-detail-url');
+      const issuedId = issued._id || issued.id;
+      if (issuedId) {
+        detailLink.href = `#/facturas/${issuedId}`;
+        detailLink.style.display = '';
+      } else {
+        detailLink.style.display = 'none';
       }
 
       issueResult.style.display = 'block';
@@ -345,99 +300,4 @@ async function initInvoicesModule(container) {
       btnConfirmIssue.textContent = 'Confirmar y Emitir a Factus';
     }
   });
-}
-
-// Historial y Detalle por ID
-async function loadInvoiceHistory(container) {
-  const loading = container.querySelector('#history-loading');
-  const table = container.querySelector('#table-history');
-  const tbody = container.querySelector('#history-rows');
-  const detailModal = container.querySelector('#invoice-detail-modal');
-  const modalContent = container.querySelector('#modal-detail-content');
-
-  loading.style.display = 'block';
-  table.style.display = 'none';
-
-  try {
-    const res = await getInvoices();
-    const invoices = Array.isArray(res) ? res : (res?.data && Array.isArray(res.data) ? res.data : (res?.data?.data || res?.data?.items || []));
-
-    tbody.innerHTML = '';
-
-    if (!invoices || invoices.length === 0) {
-      loading.textContent = 'No hay facturas registradas.';
-      return;
-    }
-
-    invoices.forEach(inv => {
-      const invId = escapeHtml(inv._id || inv.id);
-      const customerName = escapeHtml(inv.customer?.names || inv.customer?.name || inv.customer?.legal_name || 'N/A');
-      const refNumber = escapeHtml(inv.numbering || inv.referenceCode || invId);
-      const invoiceTotal = inv.grandTotal ?? inv.total ?? 0;
-      const invStatus = escapeHtml(inv.status || 'DRAFT');
-
-      const tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid #eee';
-      tr.innerHTML = `
-        <td style="padding: 8px;">${refNumber}</td>
-        <td style="padding: 8px;">${customerName}</td>
-        <td style="padding: 8px;">${formatDate(inv.createdAt || Date.now())}</td>
-        <td style="padding: 8px;">${formatCOP(invoiceTotal)}</td>
-        <td style="padding: 8px;"><span class="badge state-${invStatus.toLowerCase()}">${invStatus}</span></td>
-        <td style="padding: 8px;"><button class="btn btn-small btn-secondary btn-detail" data-id="${invId}">Ver Detalle</button></td>
-      `;
-
-      tr.querySelector('.btn-detail').addEventListener('click', async () => {
-        modalContent.innerHTML = 'Cargando detalle...';
-        detailModal.style.display = 'flex';
-
-        try {
-          const detailRes = await getInvoiceById(invId);
-          const detail = detailRes.data || detailRes;
-
-          const dCust = escapeHtml(detail.customer?.names || detail.customer?.name || 'Cliente');
-          const dNum = escapeHtml(detail.numbering || detail.referenceCode || 'N/A');
-          const dCufe = escapeHtml(detail.cufe || 'No emitido o no disponible');
-          const dStatus = escapeHtml(detail.status || 'DRAFT');
-          const dSub = formatCOP(detail.subtotal || 0);
-          const dTax = formatCOP(detail.taxTotal || 0);
-          const dTotal = formatCOP(detail.grandTotal || 0);
-          const dPdf = detail.pdfUrl;
-          const dQr = detail.qrCodeUrl;
-
-          let itemsList = '<ul>';
-          if (Array.isArray(detail.items)) {
-            detail.items.forEach(i => {
-              itemsList += `<li>${i.quantity || 1}x ${escapeHtml(i.name || 'Producto')} - ${formatCOP(i.unitPrice || 0)}</li>`;
-            });
-          }
-          itemsList += '</ul>';
-
-          modalContent.innerHTML = `
-            <p><strong>Número / Ref:</strong> ${dNum}</p>
-            <p><strong>Estado:</strong> ${dStatus}</p>
-            <p><strong>Cliente:</strong> ${dCust}</p>
-            <p><strong>Productos:</strong></p>
-            ${itemsList}
-            <p><strong>Subtotal:</strong> ${dSub}</p>
-            <p><strong>Impuestos:</strong> ${dTax}</p>
-            <p><strong>Total:</strong> ${dTotal}</p>
-            <hr style="margin: 10px 0;" />
-            <p><strong>CUFE:</strong> <span style="font-family: monospace; word-break: break-all;">${dCufe}</span></p>
-            ${dQr ? `<div style="margin: 10px 0;"><img src="${escapeHtml(dQr)}" alt="QR" style="max-width: 120px;" /></div>` : ''}
-            ${dPdf ? `<p><a href="${escapeHtml(dPdf)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.9rem;">Ver Documento Público (PDF/Factus)</a></p>` : ''}
-          `;
-        } catch (detailErr) {
-          modalContent.innerHTML = `<p style="color: red;">Error al cargar el detalle: ${escapeHtml(detailErr.message)}</p>`;
-        }
-      });
-
-      tbody.appendChild(tr);
-    });
-
-    loading.style.display = 'none';
-    table.style.display = 'table';
-  } catch (err) {
-    loading.textContent = 'Error al cargar historial: ' + err.message;
-  }
 }

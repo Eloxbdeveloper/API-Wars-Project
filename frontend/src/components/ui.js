@@ -6,6 +6,8 @@ export const STATUS = {
   DRAFT: { label: 'Borrador', tone: 'warn' },
   ISSUED: { label: 'Emitida', tone: 'ok' },
   REJECTED: { label: 'Rechazada', tone: 'danger' },
+  ERROR: { label: 'Error', tone: 'danger' },
+  CANCELLED: { label: 'Cancelada', tone: 'neutral' },
 };
 const UNKNOWN_STATUS = { label: 'Sin estado', tone: 'neutral' };
 
@@ -39,13 +41,23 @@ export function alertBox({ title, text, actionLabel }) {
 }
 
 export function invoiceRow(inv) {
-  const customer = typeof inv.customer === 'object' && inv.customer?.name ? inv.customer.name : 'Cliente';
-  const ref = inv.referenceCode ?? `Factura #${String(inv._id ?? '').slice(-6)}`;
-  return `<li class="row">
-    <div class="row-main">
-      <p class="row-title">${escapeHtml(customer)}</p>
-      <p class="row-sub">${escapeHtml(ref)} · ${formatDate(inv.createdAt)}</p>
-    </div>
-    <div class="row-end"><span class="row-amount">${formatCOP(inv.total)}</span>${badge(inv.status)}</div>
+  const customerObj = typeof inv.customer === 'object' && inv.customer ? inv.customer : null;
+  const customer =
+    customerObj?.names ||
+    customerObj?.name ||
+    customerObj?.legal_name ||
+    'Cliente sin nombre';
+  const ref = inv.numbering || inv.referenceCode || `Factura #${String(inv._id ?? '').slice(-6)}`;
+  const total = inv.grandTotal ?? inv.total ?? 0;
+  const id = inv._id || inv.id || '';
+  const href = id ? `#/facturas/${id}` : '#/facturas';
+  return `<li>
+    <a class="row row-link" href="${href}">
+      <div class="row-main">
+        <p class="row-title">${escapeHtml(customer)}</p>
+        <p class="row-sub">${escapeHtml(ref)} · ${formatDate(inv.createdAt)}</p>
+      </div>
+      <div class="row-end"><span class="row-amount">${formatCOP(total)}</span>${badge(inv.status)}</div>
+    </a>
   </li>`;
 }

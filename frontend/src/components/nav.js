@@ -2,7 +2,7 @@ const icon = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 
 const ITEMS = [
   { path: '/', label: 'Inicio', icon: icon('<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>') },
-  { path: '/dashboard', label: 'Estadisticas', icon: icon('<path d="M5 20V10M12 20V4M19 20v-7"/>') },
+  { path: '/dashboard', label: 'Estadísticas', icon: icon('<path d="M5 20V10M12 20V4M19 20v-7"/>') },
   { path: '/facturas', label: 'Facturas', icon: icon('<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>') },
   { path: '/notas-credito', label: 'Notas crédito', short: 'Notas', icon: icon('<path d="M9 14l-5-5 5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>') },
 ];

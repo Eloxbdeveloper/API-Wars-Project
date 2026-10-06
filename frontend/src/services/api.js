@@ -56,8 +56,16 @@ export const updateProduct = (id, productData) => request(`/products/${id}`, {
 });
 
 // Invoices API
-export const getInvoices = () => request('/invoices');
-export const getInvoiceById = (id) => request(`/invoices/${id}`);
+// Normaliza la respuesta { success, data } a un array plano de facturas.
+export const getInvoices = async () => {
+  const res = await request('/invoices');
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+  if (Array.isArray(res?.data?.items)) return res.data.items;
+  return [];
+};
+export const getInvoiceById = (id) => request(`/invoices/${encodeURIComponent(id)}`);
 
 // Crear borrador (envía únicamente customerId y items: [{ productId, quantity }])
 export const createInvoiceDraft = (payload) => request('/invoices', {
@@ -73,6 +81,25 @@ export const updateInvoice = (id, payload) => request(`/invoices/${id}`, {
 // Emitir factura hacia Factus Sandbox
 export const issueInvoice = (id) => request(`/invoices/${id}/issue`, {
   method: 'POST'
+});
+
+// Credit notes API (backend propio → Factus)
+export const getCreditNotes = async () => {
+  const res = await request('/credit-notes');
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  if (Array.isArray(res?.data?.data)) return res.data.data;
+  return [];
+};
+export const getCorrectionConcepts = async () => {
+  const res = await request('/credit-notes/concepts');
+  if (Array.isArray(res)) return res;
+  if (Array.isArray(res?.data)) return res.data;
+  return [];
+};
+export const createCreditNote = (payload) => request('/credit-notes', {
+  method: 'POST',
+  body: JSON.stringify(payload)
 });
 
 // ... tus otras funciones existentes ...

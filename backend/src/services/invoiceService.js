@@ -7,6 +7,95 @@ const Invoice = InvoiceModule.Invoice || InvoiceModule;
 
 const { transmitInvoiceToFactus } = require('../integrations/factus/invoices');
 
+// Claves normalizadas (sin guiones/guiones bajos) que usa Factus para el QR y el documento público.
+const QR_KEYS = new Set(['qr', 'qrcode', 'qrimage', 'qrurl', 'codigoqr']);
+const DOC_KEYS = new Set(['publicurl', 'pdfurl', 'pdf', 'documenturl']);
+
+const normalizeKey = (key) => String(key).toLowerCase().replace(/[_\-\s]/g, '');
+
+/**
+ * Recorre la respuesta cruda de Factus y devuelve el primer valor string
+ * cuya clave coincide con las claves indicadas (búsqueda en profundidad).
+ * No construye URLs: solo extrae valores ya presentes en la respuesta.
+ */
+function findFirstStringByKeys(payload, keySet, maxDepth = 6) {
+  if (!payload || typeof payload !== 'object') return null;
+
+  const queue = [{ node: payload, depth: 0 }];
+  while (queue.length > 0) {
+    const { node, depth } = queue.shift();
+    if (depth > maxDepth) continue;
+
+    for (const [key, value] of Object.entries(node)) {
+      if (keySet.has(normalizeKey(key)) && typeof value === 'string' && value.trim()) {
+        return value.trim();
+      }
+      if (value && typeof value === 'object') {
+        if (Array.isArray(value)) {
+          value.forEach((entry) => {
+            if (entry && typeof entry === 'object') queue.push({ node: entry, depth: depth + 1 });
+          });
+        } else {
+          queue.push({ node: value, depth: depth + 1 });
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Normaliza el valor de QR devuelto por Factus: puede venir como URL,
+ * data-URI, base64 puro, objeto o JSON stringificado.
+ */
+function normalizeQrValue(value, depth = 0) {
+  if (!value || depth > 3) return null;
+
+  if (typeof value === 'object') {
+    const candidate = value.qr || value.url || value.image || value.qr_image || value.qr_code || null;
+    return normalizeQrValue(candidate, depth + 1);
+  }
+
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      return normalizeQrValue(JSON.parse(trimmed), depth + 1);
+    } catch {
+      // No es JSON válido: se continúa con el valor normalizado abajo.
+    }
+  }
+
+  if (/^(https?:\/\/|data:|blob:)/i.test(trimmed)) return trimmed;
+  if (/^[A-Za-z0-9+/=]+$/.test(trimmed)) return `data:image/png;base64,${trimmed}`;
+  return trimmed;
+}
+
+/**
+ * Extrae QR y documento público desde los campos persistidos o, en su defecto,
+ * desde la respuesta cruda de Factus guardada en la factura.
+ */
+function extractFactusAssets(invoice, rawResponse = null) {
+  const storedQr = invoice.qrCodeUrl;
+  const storedPdf = invoice.pdfUrl;
+
+  const qr =
+    normalizeQrValue(storedQr) ||
+    normalizeQrValue(findFirstStringByKeys(storedQr && typeof storedQr === 'object' ? storedQr : null, QR_KEYS)) ||
+    normalizeQrValue(findFirstStringByKeys(rawResponse, QR_KEYS)) ||
+    normalizeQrValue(findFirstStringByKeys(invoice.factusResponse, QR_KEYS));
+
+  const pdf =
+    (typeof storedPdf === 'string' && storedPdf.trim() ? storedPdf.trim() : null) ||
+    findFirstStringByKeys(rawResponse, DOC_KEYS) ||
+    findFirstStringByKeys(invoice.factusResponse, DOC_KEYS);
+
+  return { qr, pdf };
+}
+
 class InvoiceService {
   /**
    * Crea un borrador de factura (DRAFT).
@@ -81,11 +170,31 @@ class InvoiceService {
   }
 
   static async getInvoices(query = {}) {
-    return await Invoice.find(query).populate('customer');
+    // Solo se aplican filtros soportados por la API (evita que parámetros
+    // como ?page=1 devuelvan una lista vacía) y se ordena de más reciente a más antiguo.
+    const filter = {};
+    if (query && query.status) {
+      filter.status = query.status;
+    }
+
+    return await Invoice.find(filter).sort({ createdAt: -1 }).populate('customer');
   }
 
   static async getInvoiceById(id) {
-    return await Invoice.findById(id).populate('customer');
+    const invoice = await Invoice.findById(id).populate('customer');
+    if (!invoice) {
+      const error = new Error('La factura especificada no existe.');
+      error.status = 404;
+      throw error;
+    }
+
+    // Garantiza QR y documento público visualizables (normaliza valores guardados
+    // o los recupera desde la respuesta cruda de Factus persistida).
+    const assets = extractFactusAssets(invoice);
+    invoice.qrCodeUrl = assets.qr || invoice.qrCodeUrl || null;
+    invoice.pdfUrl = assets.pdf || invoice.pdfUrl || null;
+
+    return invoice;
   }
 
   /**
@@ -218,8 +327,11 @@ class InvoiceService {
 
       invoice.numbering =
         innerData.number ||
+        innerData.full_number ||
         bill.number ||
+        bill.full_number ||
         responseData.number ||
+        responseData.full_number ||
         null;
 
       invoice.cufe =
@@ -234,15 +346,21 @@ class InvoiceService {
         bill.qr_image ||
         innerData.qr;
 
-      invoice.qrCodeUrl = typeof rawQr === 'object' && rawQr !== null
-        ? (rawQr.qr || rawQr.url || rawQr.image || JSON.stringify(rawQr))
-        : (rawQr || null);
+      invoice.qrCodeUrl =
+        normalizeQrValue(rawQr) ||
+        normalizeQrValue(findFirstStringByKeys(result, QR_KEYS)) ||
+        null;
 
-      invoice.pdfUrl =
+      const rawPdf =
         links.public_url ||
         bill.public_url ||
         bill.pdf_url ||
         innerData.public_url ||
+        null;
+
+      invoice.pdfUrl =
+        (typeof rawPdf === 'string' && rawPdf.trim() ? rawPdf.trim() : null) ||
+        findFirstStringByKeys(result, DOC_KEYS) ||
         null;
 
       invoice.factusResponse = result;
@@ -274,11 +392,16 @@ class InvoiceService {
           invoice.cufe = existingBill.cufe || factusErrorData.cufe || null;
           
           const rawQr = existingLinks.qr || existingBill.qr || existingBill.qr_image || factusErrorData.qr;
-          invoice.qrCodeUrl = typeof rawQr === 'object' && rawQr !== null
-            ? (rawQr.qr || rawQr.url || rawQr.image || null)
-            : (rawQr || null);
+          invoice.qrCodeUrl =
+            normalizeQrValue(rawQr) ||
+            normalizeQrValue(findFirstStringByKeys(errorDetails, QR_KEYS)) ||
+            null;
 
-          invoice.pdfUrl = existingLinks.public_url || existingBill.public_url || existingBill.pdf_url || factusErrorData.public_url || null;
+          const rawPdf = existingLinks.public_url || existingBill.public_url || existingBill.pdf_url || factusErrorData.public_url || null;
+          invoice.pdfUrl =
+            (typeof rawPdf === 'string' && rawPdf.trim() ? rawPdf.trim() : null) ||
+            findFirstStringByKeys(errorDetails, DOC_KEYS) ||
+            null;
 
           invoice.factusResponse = errorDetails;
           invoice.errorMessage = null;
@@ -302,4 +425,11 @@ class InvoiceService {
   }
 }
 
-module.exports = { InvoiceService, issueInvoice: InvoiceService.issueInvoice };
+module.exports = {
+  InvoiceService,
+  createInvoice: InvoiceService.createInvoice,
+  getInvoices: InvoiceService.getInvoices,
+  getInvoiceById: InvoiceService.getInvoiceById,
+  updateInvoice: InvoiceService.updateInvoice,
+  issueInvoice: InvoiceService.issueInvoice
+};

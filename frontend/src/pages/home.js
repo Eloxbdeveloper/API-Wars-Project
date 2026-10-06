@@ -31,7 +31,11 @@ export function renderHome(container) {
         return;
       }
       const recent = [...invoices].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, RECENT_LIMIT);
-      recentEl.innerHTML = `<ul class="rows">${recent.map(invoiceRow).join('')}</ul>`;
+      recentEl.innerHTML = `
+        <ul class="rows">${recent.map(invoiceRow).join('')}</ul>
+        <div style="padding: var(--space-4) var(--space-6); border-top: 1px solid var(--line);">
+          <a class="btn btn-secondary" href="#/facturas">Ver todas las facturas</a>
+        </div>`;
     } catch {
       if (!recentEl.isConnected) return;
       recentEl.innerHTML = alertBox({ title: 'No pudimos cargar tus facturas', text: 'Intenta nuevamente.', actionLabel: 'Intentar de nuevo' });

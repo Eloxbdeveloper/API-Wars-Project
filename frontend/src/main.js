@@ -5,4 +5,15 @@ import { checkBackendHealth } from './services/api.js';
 
 const content = renderShell(document.querySelector('#app'));
 startRouter(content);
-checkBackendHealth().then(setConnection);
+
+// Estado de conexión con el backend: se actualiza al iniciar y periódicamente,
+// para que la interfaz refleje si el servidor está caído o se recuperó.
+function updateConnection() {
+  return checkBackendHealth()
+    .then(() => setConnection(true))
+    .catch(() => setConnection(false));
+}
+
+updateConnection();
+setInterval(updateConnection, 15000);
+

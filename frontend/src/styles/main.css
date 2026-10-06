@@ -208,3 +208,72 @@ a { color: inherit; }
 .meter-wrap { display: flex; align-items: center; gap: var(--space-3); flex: 1; justify-content: flex-end; }
 .meter { flex: 1; max-width: 220px; height: 8px; background: var(--bg); border-radius: 999px; overflow: hidden; }
 .meter > span { display: block; height: 100%; background: var(--brand); }
+
+/* ---------- Enlaces de fila (Actividad reciente) ---------- */
+.rows a.row, a.row-link { text-decoration: none; color: inherit; }
+.rows a.row:hover { background: var(--bg); }
+.rows li + li .row { border-top: 1px solid var(--line); }
+
+/* ---------- Tablas responsivas ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+.data-table { width: 100%; min-width: 720px; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); font-size: var(--text-sm); vertical-align: middle; }
+.data-table thead th { background: var(--bg); font-weight: 700; white-space: nowrap; }
+.data-table .num, .data-table td.num, .data-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.panel-note { padding: var(--space-4) var(--space-6) 0; font-size: var(--text-sm); }
+
+/* ---------- Formularios ---------- */
+.form-control {
+  width: 100%; min-height: var(--tap); padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font: inherit; background: var(--surface); color: var(--ink);
+}
+.form-group { margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+.form-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.alert-inline { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--line); margin-bottom: var(--space-4); font-size: var(--text-sm); }
+.alert-inline.is-error { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+.alert-inline.is-ok { background: var(--ok-soft); color: var(--ok); border-color: var(--ok); }
+.info-box, .review-box, .result-box { padding: var(--space-4); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); margin-bottom: var(--space-4); }
+.info-box p, .review-box p, .result-box p { margin: 4px 0; }
+.panel-body { padding: var(--space-4) var(--space-6) var(--space-6); }
+
+/* ---------- Botones extra (usa los mismos tokens) ---------- */
+.btn-success { background: var(--ok); color: #fff; }
+.btn-success:hover { filter: brightness(0.92); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-link { background: transparent; color: var(--brand); text-decoration: underline; }
+.btn-small { min-height: 34px; padding: 0 var(--space-3); font-size: var(--text-sm); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- Detalle de factura ---------- */
+.detail-head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--space-3); padding: var(--space-4) var(--space-6); border-bottom: 1px solid var(--line);
+}
+.detail-number { font-size: var(--text-lg); font-weight: 700; }
+.detail-customer { color: var(--ink-soft); }
+.detail-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-4); padding: var(--space-4) var(--space-6); margin: 0; }
+.detail-grid.totals { background: var(--bg); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.detail-grid dt { font-size: var(--text-sm); color: var(--ink-soft); }
+.detail-grid dd { font-weight: 600; word-break: break-word; margin: 0; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+.muted { color: var(--ink-soft); }
+.total-strong { color: var(--brand); font-size: var(--text-lg); }
+.alert-error { color: var(--danger); padding: 0 var(--space-6) var(--space-3); }
+.qr-block {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4);
+  padding: var(--space-4) var(--space-6) var(--space-6);
+}
+.qr-block img { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 6px; background: #fff; }
+.qr-links { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* ---------- Resumen de6 celdas (Estadísticas) ---------- */
+@media (min-width: 600px) {
+  .stat:nth-child(3n + 1) { border-left: 0; }
+  .stat:nth-child(n + 4) { border-top: 1px solid var(--line); }
+}
+
+@media (min-width: 600px) {
+  .detail-grid { grid-template-columns: repeat(2, 1fr); }
+  .detail-grid.totals { grid-template-columns: repeat(3, 1fr); }
+}

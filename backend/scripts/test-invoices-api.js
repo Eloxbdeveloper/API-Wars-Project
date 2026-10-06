@@ -158,7 +158,7 @@ async function runTests() {
 
     // --- LIMPIEZA DE DATOS PRUEBA ---
     console.log('\n[Limpieza] Eliminando registros temporales de prueba...');
-    await Invoice.deleteMany({ customerId: testCustomer._id });
+    await Invoice.deleteMany({ customer: testCustomer._id });
     await Invoice.deleteMany({ _id: tamperedInvoice._id });
     await Customer.deleteMany({ _id: testCustomer._id });
     await Product.deleteMany({ _id: { $in: [testProduct1._id, testProduct2._id] } });

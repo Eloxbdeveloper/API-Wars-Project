@@ -6,6 +6,7 @@ const healthRoutes = require('./routes/health');
 const customerRoutes = require('./routes/customers');
 const productRoutes = require('./routes/products'); // <-- AGREGADO
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const creditNoteRoutes = require('./routes/creditNotes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -20,6 +21,7 @@ app.use('/api/health', healthRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/products', productRoutes); // <-- AGREGADO
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/credit-notes', creditNoteRoutes);
 
 // Manejo de ruta no encontrada (404)
 app.use((req, res) => {
