@@ -1,59 +1,61 @@
-#FactuLocal
+# FactuLocal
 
-Acceso al proyecto
+## Acceso al proyecto
 
 Puedes probar FactuLocal de dos formas:
 
-1. Versión desplegada
-
+### Versión desplegada
 Accede directamente a la aplicación:
 
-"FactuLocal" (https://factulocal.vercel.app/)
+["FactuLocal"](https://factulocal.vercel.app/)
 
-2. Instalación local
-
+### Instalación local
 Clona el repositorio e instala las dependencias necesarias para ejecutar el frontend y backend por separado.
 
+```bash
 git clone https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project.git
 cd Factulocal-API-Wars-Project
+```
 
-Backend
+#### Backend
 
+```bash
 cd backend
 npm install
 npm run dev
+```
 
-Frontend
+#### Frontend
 
 En otra terminal:
 
+```bash
 cd frontend
 npm install
 npm run dev
+```
 
-Variables de entorno
+### Variables de entorno
 
-Para ejecutar correctamente la integración con Factus, Factus Pay y MongoDB, debes configurar las variables de entorno necesarias en un archivo ".env".
+Para ejecutar correctamente la integración con Factus, Factus Pay y MongoDB, debes configurar las variables de entorno necesarias en un archivo `.env`.
 
-«Consulta la configuración del proyecto para conocer las variables requeridas.»
+> «Consulta la configuración del proyecto para conocer las variables requeridas.»
 
 ---
 
-¿Qué es FactuLocal?
+## ¿Qué es FactuLocal?
 
 FactuLocal es una solución desarrollada para facilitar la gestión y generación de facturación electrónica para negocios locales, integrando servicios externos como Factus, Factus Pay y MongoDB.
 
 El proyecto fue desarrollado como parte de API Wars, aplicando una arquitectura modular que permite separar las responsabilidades del frontend y backend y facilita la escalabilidad y el mantenimiento de la aplicación.
 
-Repositorio
+### Repositorio
 
-"GitHub — FactuLocal" (https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project)
-
----
+["GitHub — FactuLocal"](https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project)
 
 FactuLocal es una aplicación web creada para pequeños negocios que necesitan cobrar a sus clientes y generar facturas electrónicas.
 
-La aplicación conecta **Factus Pay** y **Factus** para que el proceso sea automático.
+La aplicación conecta Factus Pay y Factus para que el proceso sea automático.
 
 En lugar de cobrar primero y después hacer la factura manualmente, FactuLocal conecta ambos pasos:
 
@@ -89,11 +91,11 @@ El proceso completo es:
 8. El negocio puede ver la factura
 ```
 
-La idea principal es conectar el **cobro** con la **facturación**.
+La idea principal es conectar el cobro con la facturación.
 
 ---
 
-# ¿Qué hace Factus Pay?
+## ¿Qué hace Factus Pay?
 
 Factus Pay se utiliza para realizar el cobro.
 
@@ -131,7 +133,7 @@ Cuando el estado llega a `paid`, significa que el pago fue confirmado.
 
 ---
 
-# ¿Qué hace Factus?
+## ¿Qué hace Factus?
 
 Factus se utiliza para generar la factura electrónica.
 
@@ -159,7 +161,7 @@ Después devuelve información como:
 
 ---
 
-# ¿Por qué usamos las dos APIs?
+## ¿Por qué usamos las dos APIs?
 
 Cada API tiene una función diferente.
 
@@ -204,7 +206,7 @@ Factura electrónica
 
 ---
 
-# Arquitectura
+## Arquitectura
 
 La aplicación tiene tres partes principales:
 
@@ -231,7 +233,7 @@ Esto es importante porque las credenciales de las APIs permanecen en el backend 
 
 ---
 
-# Flujo completo de una venta
+## Flujo completo de una venta
 
 Supongamos que un pequeño negocio vende un producto.
 
@@ -280,9 +282,7 @@ FactuLocal consulta el estado del cobro.
 
 Cuando Factus Pay responde:
 
-```text
-paid
-```
+`paid`
 
 FactuLocal sabe que el cliente ya pagó.
 
@@ -304,20 +304,18 @@ Factus devuelve los datos de la factura.
 
 FactuLocal muestra:
 
-```text
-Número de factura
-CUFE
-QR
-Documento
-```
+* Número de factura
+* CUFE
+* QR
+* Documento
 
 ---
 
-# QR de pago y QR de factura
+## QR de pago y QR de factura
 
 En el proceso aparecen dos QR diferentes.
 
-El primero pertenece a **Factus Pay**.
+El primero pertenece a Factus Pay.
 
 Su función es permitir el pago:
 
@@ -327,7 +325,7 @@ QR Factus Pay
     Pagar
 ```
 
-El segundo pertenece a **Factus**.
+El segundo pertenece a Factus.
 
 Aparece después de generar la factura y está relacionado con el documento electrónico:
 
@@ -341,24 +339,22 @@ No son el mismo QR ni tienen la misma función.
 
 ---
 
-# Base de datos
+## Base de datos
 
 FactuLocal utiliza MongoDB para guardar la información necesaria para el funcionamiento de la aplicación.
 
 Entre los datos manejados se encuentran:
 
-```text
-Clientes
-Productos
-Facturas
-Pagos
-```
+* Clientes
+* Productos
+* Facturas
+* Pagos
 
 Los pagos se relacionan con las facturas para poder saber qué pago corresponde a cada venta.
 
 ---
 
-# Dashboard
+## Dashboard
 
 FactuLocal también incluye un dashboard para consultar la información del negocio.
 
@@ -375,40 +371,35 @@ La información puede consultarse por diferentes períodos.
 
 ---
 
-# Tecnologías utilizadas
+## Tecnologías utilizadas
 
 ### Frontend
-
 * HTML
 * CSS
 * JavaScript
 * Vite
 
 ### Backend
-
 * Node.js
 * Express
 * JavaScript
 
 ### Base de datos
-
 * MongoDB
 * Mongoose
 
 ### APIs
-
 * Factus
 * Factus Pay
 
 ### Deployment
-
 * Vercel para el frontend.
 * Render para el backend.
 * MongoDB Atlas para la base de datos.
 
 ---
 
-# Seguridad
+## Seguridad
 
 El frontend nunca se conecta directamente con Factus ni con Factus Pay.
 
@@ -430,7 +421,7 @@ Los archivos con credenciales reales no se encuentran en el repositorio.
 
 ---
 
-# Sandbox
+## Sandbox
 
 El proyecto utiliza los entornos Sandbox de Factus y Factus Pay.
 
@@ -456,7 +447,7 @@ Factura electrónica
 
 ---
 
-# Estructura del proyecto
+## Estructura del proyecto
 
 ```text
 API-Wars-Project/
@@ -474,27 +465,15 @@ API-Wars-Project/
 
 Dentro del backend se encuentran principalmente:
 
-```text
-controllers/
-    Manejan las peticiones
-
-models/
-    Representan los datos
-
-routes/
-    Definen las rutas de la API
-
-services/
-    Contienen la lógica del negocio
-
-integrations/
-    Conectan FactuLocal con Factus
-    y Factus Pay
-```
+* **controllers/** — Manejan las peticiones
+* **models/** — Representan los datos
+* **routes/** — Definen las rutas de la API
+* **services/** — Contienen la lógica del negocio
+* **integrations/** — Conectan FactuLocal con Factus y Factus Pay
 
 ---
 
-# Integración principal
+## Integración principal
 
 La parte más importante del proyecto es esta:
 
@@ -529,15 +508,13 @@ La parte más importante del proyecto es esta:
 
 En resumen:
 
-**Factus Pay cobra.**
-
-**Factus factura.**
-
-**FactuLocal conecta ambos procesos.**
+* Factus Pay cobra.
+* Factus factura.
+* FactuLocal conecta ambos procesos.
 
 ---
 
-# Objetivo del proyecto
+## Objetivo del proyecto
 
 El objetivo de FactuLocal es simplificar el proceso de venta para pequeños negocios.
 
@@ -561,27 +538,25 @@ Así, una venta puede pasar desde el cobro hasta la factura electrónica sin que
 
 ## API WARS 2026
 
-FactuLocal fue desarrollado para el reto de integración de APIs de **API WARS 2026**.
+FactuLocal fue desarrollado para el reto de integración de APIs de API WARS 2026.
 
 El proyecto responde al concepto:
 
-> **Cobra. Factura. Crece.**
+> Cobra. Factura. Crece.
 
 La solución utiliza las dos APIs principales del reto:
 
-**Factus Pay → Cobros**
-
-**Factus → Facturación electrónica**
+* **Factus Pay** → Cobros
+* **Factus** → Facturación electrónica
 
 y crea un flujo integrado entre ambas.
 
+---
 
 ## Autores
 
-Proyecto desarrollado por el equipo de **API WARS 2026**.
+Proyecto desarrollado por el equipo de API WARS 2026.
 
 * Emanuel Orjuela Barbosa - eloxbdevcollabs@hotmail.com
 * Juan David Useche Perez
 * Adrián Rueda Garzon
-
-
