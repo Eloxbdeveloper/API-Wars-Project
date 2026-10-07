@@ -1,5 +1,7 @@
 # FactuLocal
 
+FactuLocal
+
 Acceso al proyecto
 
 Puedes probar FactuLocal de dos formas:
@@ -11,20 +13,20 @@ https://factulocal.vercel.app/
 2. Instalación local
 Clona el repositorio, instala las dependencias y ejecuta el frontend y backend por separado.
 
-git clone https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project
-cd API-Wars-Project
+"git clone https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project"
+"cd API-Wars-Project"
 
 Backend:
 
-cd backend
-npm install
-npm run dev
+"cd backend"
+"npm install"
+"npm run dev"
 
 Frontend, en otra terminal:
 
-cd frontend
-npm install
-npm run dev
+"cd frontend"
+"npm install"
+"npm run dev"
 
 Para ejecutar la integración con Factus, Factus Pay y MongoDB debes configurar las variables de entorno necesarias en un archivo ".env".
 
