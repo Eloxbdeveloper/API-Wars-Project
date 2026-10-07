@@ -41,15 +41,7 @@ Para ejecutar correctamente la integración con Factus, Factus Pay y MongoDB, de
 
 ---
 
-## ¿Qué es FactuLocal?
-
-FactuLocal es una solución desarrollada para facilitar la gestión y generación de facturación electrónica para negocios locales, integrando servicios externos como Factus, Factus Pay y MongoDB.
-
-El proyecto fue desarrollado como parte de API Wars, aplicando una arquitectura modular que permite separar las responsabilidades del frontend y backend y facilita la escalabilidad y el mantenimiento de la aplicación.
-
-### Repositorio
-
-["GitHub — FactuLocal"](https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project)
+## ¿Qué es Factulocal?
 
 FactuLocal es una aplicación web creada para pequeños negocios que necesitan cobrar a sus clientes y generar facturas electrónicas.
 
