@@ -39,8 +39,6 @@ npm run dev
 
 Para ejecutar correctamente la integración con Factus, Factus Pay y MongoDB, debes configurar las variables de entorno necesarias en un archivo `.env`.
 
-> «Consulta la configuración del proyecto para conocer las variables requeridas.»
-
 ---
 
 ## ¿Qué es FactuLocal?
