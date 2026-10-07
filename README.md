@@ -7,7 +7,7 @@ Puedes probar FactuLocal de dos formas:
 ### Versión desplegada
 Accede directamente a la aplicación:
 
-["FactuLocal"](https://factulocal.vercel.app/)
+https://factulocal.vercel.app/
 
 ### Instalación local
 Clona el repositorio e instala las dependencias necesarias para ejecutar el frontend y backend por separado.
