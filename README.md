@@ -1,24 +1,34 @@
 # FactuLocal
 
-FactuLocal
 Acceso al proyecto
+
 Puedes probar FactuLocal de dos formas:
+
 1. Versión desplegada
 Accede directamente a la aplicación:
 https://factulocal.vercel.app/
+
 2. Instalación local
 Clona el repositorio, instala las dependencias y ejecuta el frontend y backend por separado.
+
 git clone https://github.com/Eloxbdeveloper/Factulocal-API-Wars-Project
 cd API-Wars-Project
+
 Backend:
+
 cd backend
 npm install
 npm run dev
+
 Frontend, en otra terminal:
+
 cd frontend
 npm install
 npm run dev
-Para ejecutar la integración con Factus, Factus Pay y MongoDB debes configurar las variables de entorno necesarias en un archivo .env.
+
+Para ejecutar la integración con Factus, Factus Pay y MongoDB debes configurar las variables de entorno necesarias en un archivo ".env".
+
+---
 
 FactuLocal es una aplicación web creada para pequeños negocios que necesitan cobrar a sus clientes y generar facturas electrónicas.
 
