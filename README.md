@@ -9,6 +9,8 @@ Accede directamente a la aplicación:
 
 https://factulocal.vercel.app/
 
+> **Nota:** El backend está alojado en Render mediante una instancia gratuita. Debido a la inactividad, puede entrar en suspensión y tardar **hasta 50 segundos o más en responder la primera solicitud**. Después de activarse, la aplicación funciona normalmente.
+
 ### Instalación local
 Clona el repositorio e instala las dependencias necesarias para ejecutar el frontend y backend por separado.
 
